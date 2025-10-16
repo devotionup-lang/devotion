@@ -28,7 +28,7 @@ app.get("/api/trm", async (req, res) => {
     }
 
     const trmOficial = parseFloat(valorStr);
-    const trmDescontada = trmOficial * 0.95; // aplica 5% de descuento
+    const trmDescontada = trmOficial * 0.945; // aplica 5% de descuento
     const fecha =
       data[0].vigenciadesde || data[0].vigenciahasta || data[0].fecha;
 

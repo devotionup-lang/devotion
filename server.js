@@ -1,26 +1,35 @@
 import express from "express";
 import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
+
+const PORT = process.env.PORT || 3000;
 
 app.get("/api/trm", async (req, res) => {
   try {
-    const resp = await fetch("https://www.datos.gov.co/resource/32sa-8pi3.json?$order=fecha DESC&$limit=1");
-    const data = await resp.json();
+    // API oficial del Banco de la República (Datos Abiertos Colombia)
+    const url = "https://www.datos.gov.co/resource/32sa-8pi3.json?$order=vigenciahasta DESC&$limit=1";
+    const response = await fetch(url);
+    const data = await response.json();
 
-    let valor = data[0].valor || data[0].VALOR;
-    valor = parseFloat(valor.replace(/[, ]+/g, ""));
-    const trm = valor * 0.95; // 🔽 Aplica descuento del 5%
+    if (!data || !data.length || !data[0].valor) {
+      throw new Error("Respuesta inválida del servicio TRM");
+    }
 
-    res.json({
-      trm,
-      fecha: data[0].fecha || data[0].FECHA,
-    });
+    const trmOficial = parseFloat(data[0].valor);
+    const trmDescontada = trmOficial * 0.95; // resta el 5 %
+    const fecha = data[0].vigenciahasta;
+
+    res.json({ trm: trmDescontada, fecha });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al obtener TRM" });
+    console.error("Error obteniendo TRM:", error);
+    res.status(500).json({ error: "No se pudo obtener la TRM" });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor TRM Proxy en puerto ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Servidor TRM activo en puerto ${PORT}`);
+});
+
